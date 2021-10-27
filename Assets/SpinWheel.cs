@@ -12,6 +12,7 @@ using UnityEngine;
 public class SpinWheel : MonoBehaviour {
     private float rotationSpeed = 0f;
     private bool isSlowingDown = false;
+    private bool isSpinning = false;
     private int finalAngle = 0;
     int candyCode = 0;
 
@@ -53,14 +54,21 @@ public class SpinWheel : MonoBehaviour {
             Debug.Log("milky way");
             finalAngle = 295;
             spinWheel();
-        }else{
-            // regenerate code if does not fullfill conditions
+        } else if (!mm && !twix && !snickers && !milky) {
+            // if all candies are turned off, by default, mm will turn back on
+            mm = true;
+            generateCandy();
+        } else {
+            // regenerate code if candy is disabled
             generateCandy();
         }
         
     }
 
     private void spinWheel() {
+        // marks wheel as spinning
+        isSpinning = true;
+
         // sets inital wheel rotation speed
         rotationSpeed = speedToDegrees(360) * 2;
         
@@ -88,19 +96,31 @@ public class SpinWheel : MonoBehaviour {
                 candy = Instantiate(milkyPrefab) as GameObject;
                 break;
         }
-        candy.transform.position = new Vector3(Random.Range(-9, 9), spawnerPosition.y, spawnerPosition.z);
+        candy.transform.position = new Vector3(Random.Range(-1.13f, 1.78f) + spawnerPosition.x, spawnerPosition.y, spawnerPosition.z);
     }
 
     void Update() {
         // checks for when space is pressed
         if (Input.GetKeyDown(KeyCode.Space)) {
-            // generates number between 0-4
-            generateCandy();
+            // makes sure wheel is not spinning
+            if (!isSpinning) { 
+                // resets wheel for next spin
+                isSlowingDown = false;
+                isSpinning = false;
+                rotationSpeed = 0;
+                transform.eulerAngles = new Vector3(
+                    0,0,0
+                );
+
+                // generates candy code
+                generateCandy();
+            }
         }
 
         // resets wheel when up arrow is pressed
         if (Input.GetKeyDown(KeyCode.UpArrow)) {
             isSlowingDown = false;
+            isSpinning = false;
             rotationSpeed = 0;
             transform.eulerAngles = new Vector3(
                 0,0,0
@@ -144,9 +164,12 @@ public class SpinWheel : MonoBehaviour {
                 // sets final speed to exactly zero to prevent drift
                 rotationSpeed = 0f;
                 isSlowingDown = false;
-                
+                isSpinning = false;
                 // after wheel has spun, start spawning in candy objects
-                StartCoroutine(spawnCandy());
+                //StartCoroutine(spawnCandy());
+
+                // creates 1 instance of rolled candy
+                createCandy();
             }
         }
         
@@ -161,13 +184,13 @@ public class SpinWheel : MonoBehaviour {
     }
 
     // candy spawning loop
-    IEnumerator spawnCandy() {
-        // spawns 10 random instances of candy at random intervals
-        for (int i = 0; i < 10; i++) {
-            yield return new WaitForSeconds(Random.Range(0f,1f));
-            createCandy();
-        }
-    }
+    // IEnumerator spawnCandy() {
+    //     // spawns 10 random instances of candy at random intervals
+    //     for (int i = 0; i < 10; i++) {
+    //         yield return new WaitForSeconds(Random.Range(0f,1f));
+    //         createCandy();
+    //     }
+    // }
 
     // takes degrees and outputs speed to get to that angle in 1 sec
     private float speedToDegrees(float degrees) {
